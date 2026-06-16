@@ -1,0 +1,37 @@
+{
+  "source": "https://messenger.abeto.co/",
+  "capturedAt": "2026-06-16",
+  "totals": {
+    "files": 415,
+    "size": "13M"
+  },
+  "stacks": {
+    "entry": "assets/webgl-C4v7tvuW.js",
+    "runtime": "assets/runtime-C2kxzoFi.js",
+    "app3d": "assets/App3D-BLRWK1h9.js",
+    "workers": [
+      "assets/dracoworker-9mmlh0V-.js",
+      "assets/glyphworker-DoaYwstb.js",
+      "assets/bitmapworker-DtCLhbWB.js",
+      "assets/geometryworker-WyEueJn9.js"
+    ],
+    "styles": [
+      "styles/bundle.css",
+      "styles/inline.css"
+    ],
+    "shadersDir": "shaders/"
+  },
+  "assetTypes": {
+    "geometries": "assets/geometries/**/*.drc",
+    "textures": "assets/images/**/*.ktx2",
+    "uiIcons": "assets/images/ui/**/*.icon",
+    "fonts": "assets/fonts/*.font",
+    "audio": "assets/audio/**/*.ogg",
+    "basis": "assets/libs/basis/*"
+  },
+  "scripts": {
+    "download": "scripts/download-reference.sh",
+    "discover": "scripts/discover-assets.py",
+    "extractShaders": "scripts/extract-shaders.py"
+  }
+}

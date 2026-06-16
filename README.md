@@ -1,42 +1,39 @@
-# sv
+# messenger-copy
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Unofficial learning workspace that mirrors assets, shaders, and scene structure from [**Messenger**](https://messenger.abeto.co/) by [abeto](https://abeto.co/).
 
-## Creating a project
+> **Disclaimer:** This is not the real game. It is a local, AI-assisted rebuild for study only. All original art, audio, and design remain the property of their respective owners. See [ATTRIBUTION.md](./ATTRIBUTION.md).
 
-If you're seeing this, you've probably already done this step. Congrats!
+## What this is
 
-```sh
-# create a new project
-npx sv create my-app
-```
+- A SvelteKit + Three.js preview with **Intro**, **Gameplay**, and **NPC** scene modes
+- Downloaded reference bundles under `reference/messenger.abeto.co/`
+- Ported/simplified GLSL materials, Draco loaders, and post-processing experiments
 
-To recreate this project with the same configuration:
+## License
 
-```sh
-# recreate this project
-pnpm dlx sv@0.16.1 create --template minimal --types ts --add vitest="usages:component,unit" tailwindcss="plugins:typography,forms" mcp="ide:opencode,cursor+setup:local" experimental="versions:kit+features:async,remoteFunctions,explicitEnvironmentVariables,handleRenderingErrors" --install pnpm messenger-copy
-```
+- **Repository code** (`src/`, scripts, config): [MIT](./LICENSE)
+- **Reference assets** (`reference/`, `static/messenger`): belong to the original Messenger project — do not redistribute without permission
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Develop
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+pnpm install
+pnpm dev
 ```
 
-## Building
+Open [http://localhost:5173](http://localhost:5173).
 
-To create a production version of your app:
+### Reference tooling
 
 ```sh
-npm run build
+pnpm reference:discover   # find asset URLs from bundles
+pnpm reference:download   # fetch missing reference files
+pnpm reference:shaders    # extract GLSL from JS bundles
 ```
 
-You can preview the production build with `npm run preview`.
+## Stack
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- SvelteKit 2 / Svelte 5
+- Three.js r184
+- TypeScript, Tailwind CSS, Vitest

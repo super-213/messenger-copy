@@ -1,6 +1,6 @@
 # Messenger reference manifest
 # Source: https://messenger.abeto.co
-# Generated: 2026-06-16T20:07:02+05:00
+# Generated: 2026-06-16T20:17:44+05:00
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/44bdbdb0-b663-47c1-95f5-14066afccd72
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/assets/App3D-BLRWK1h9.js
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/assets/audio/ambiances/base.ogg
@@ -226,8 +226,11 @@
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/discovered-urls.txt
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/index.html
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/inventory.json
+/home/arafays/projects/messenger-copy/reference/messenger.abeto.co/network-urls-gameplay.txt
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/network-urls-round2.txt
+/home/arafays/projects/messenger-copy/reference/messenger.abeto.co/network-urls-round3.txt
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/network-urls.txt
+/home/arafays/projects/messenger-copy/reference/messenger.abeto.co/screenshots/after-start.png
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/screenshots/home.png
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/shaders/App3D-BLRWK1h9-001.frag
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/shaders/App3D-BLRWK1h9-001.glsl
@@ -414,5 +417,11 @@
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/shaders/App3D-BLRWK1h9-179.frag
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/shaders/App3D-BLRWK1h9-180.frag
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/shaders/App3D-BLRWK1h9-181.frag
+/home/arafays/projects/messenger-copy/reference/messenger.abeto.co/shaders/port-cloudMaterial/frag.glsl
+/home/arafays/projects/messenger-copy/reference/messenger.abeto.co/shaders/port-cloudMaterial/vert.glsl
+/home/arafays/projects/messenger-copy/reference/messenger.abeto.co/shaders/port-introMaterial/frag.glsl
+/home/arafays/projects/messenger-copy/reference/messenger.abeto.co/shaders/port-introMaterial/vert.glsl
+/home/arafays/projects/messenger-copy/reference/messenger.abeto.co/shaders/port-waterMaterial/frag.glsl
+/home/arafays/projects/messenger-copy/reference/messenger.abeto.co/shaders/port-waterMaterial/vert.glsl
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/styles/bundle.css
 /home/arafays/projects/messenger-copy/reference/messenger.abeto.co/styles/inline.css

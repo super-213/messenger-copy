@@ -6,6 +6,15 @@
     "url": "https://blog.zhihaojiang.com",
     "direction": [-0.40617493, -0.2838886, 0.86857883],
     "radius": 2.5,
-    "openInNewTab": false
+    "openInNewTab": true
+  },
+  {
+    "id": "second-me",
+    "title": "个人分身",
+    "location": "书店旁",
+    "url": "https://second-me.zhihaojiang.com/",
+    "direction": [0.96696205, 0.2423811, 0.07896707],
+    "radius": 2.5,
+    "openInNewTab": true
   }
 ]

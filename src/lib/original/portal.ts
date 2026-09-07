@@ -83,6 +83,9 @@ function initialize(scene: OriginalScene) {
 	const mesh = scene.characters.mesh;
 	const ray = mesh._collisionPhysics._rayCaster;
 	for (const portal of portals) {
+		portal.marker?.remove();
+		portal.marker = null;
+		portal.position = null;
 		const direction = mesh._localObject.position.clone().set(...portal.direction).normalize();
 		ray.set(direction.clone().multiplyScalar(100), direction.clone().negate());
 		const hit = ray.intersectObject(mesh._collisionPhysics._collider)[0];
@@ -101,7 +104,13 @@ function tick(time: number) {
 	frame = requestAnimationFrame(tick);
 	const runtime = (window as OriginalWindow).__originalMessenger;
 	const scene = runtime?.controller.state === 'present' ? runtime.controller.currentScene : null;
-	if (!scene?.characters?.mesh || !scene._isUploaded) return;
+	if (!scene?.characters?.mesh || !scene._isUploaded) {
+		active = null;
+		panel.hidden = true;
+		live.textContent = '';
+		for (const portal of portals) if (portal.marker) portal.marker.hidden = true;
+		return;
+	}
 	if (currentScene !== scene) { currentScene = scene; initialize(scene); }
 	const next = nearby(scene);
 	if (next !== active) {
@@ -133,5 +142,19 @@ function tick(time: number) {
 		coordinates.textContent = `direction: [${player.clone().normalize().toArray().map((n) => n.toFixed(5)).join(', ')}]`;
 	}
 }
-frame = requestAnimationFrame(tick);
-window.addEventListener('pagehide', () => cancelAnimationFrame(frame), { once: true });
+function pauseUpdates() {
+	cancelAnimationFrame(frame);
+	active = null;
+	panel.hidden = true;
+	live.textContent = '';
+	for (const portal of portals) if (portal.marker) portal.marker.hidden = true;
+}
+function resumeUpdates() {
+	// Back/forward cache restores this document without running the module again.
+	// Cancel any pending frame so repeated pageshow events cannot create duplicate loops.
+	cancelAnimationFrame(frame);
+	frame = requestAnimationFrame(tick);
+}
+resumeUpdates();
+window.addEventListener('pagehide', pauseUpdates);
+window.addEventListener('pageshow', resumeUpdates);

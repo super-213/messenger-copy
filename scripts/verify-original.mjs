@@ -125,9 +125,9 @@ async function verifyChecklist(page, frame, mobile = false, completed = false) {
 	await frame.evaluate(() => window.__originalMessenger.events.emit('ui_quest_log_toggle'));
 	await panel.waitFor({ state: 'hidden' });
 }
-async function placeAtPortal(frame, distance = 0) {
-	return frame.evaluate(async (distance) => {
-		const config = (await fetch('/original/portals.json').then((r) => r.json()))[0];
+async function placeAtPortal(frame, distance = 0, index = 0) {
+	return frame.evaluate(async ({ distance, index }) => {
+		const config = (await fetch('/original/portals.json').then((r) => r.json()))[index];
 		const s = window.__originalMessenger.controller.currentScene, m = s.characters.mesh;
 		const dir = m._localObject.position.clone().set(...config.direction).normalize();
 		const ray = m._collisionPhysics._rayCaster;
@@ -137,7 +137,55 @@ async function placeAtPortal(frame, distance = 0) {
 		const target = hit.point.clone().addScaledVector(tangent, distance);
 		m.setInitialPosition(target.toArray(), 0, Math.PI, target.clone().normalize().toArray());
 		return { ground: hit.point.toArray(), radius: config.radius, npcs: s.npcs.length, hasSky: !!s.sky, hasBones: !!m._boneTexture, offline: !m._connection };
-	}, distance);
+	}, { distance, index });
+}
+async function verifyPortalRestore(page, frame) {
+	const link = frame.getByRole('link', { name: '访问个人分身 ↗' });
+	await placeAtPortal(frame, 0, 1);
+	await link.waitFor();
+	assert.equal(await link.getAttribute('href'), 'https://second-me.zhihaojiang.com/');
+	assert.equal(await link.getAttribute('target'), '_blank');
+	assert.equal(await frame.locator('.project-marker').nth(1).innerText(), '个人分身 · 书店旁');
+	// Exercise repeated BFCache lifecycle events, including movement while updates are paused.
+	for (let visit = 0; visit < 2; visit++) {
+		await frame.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })));
+		await link.waitFor({ state: 'hidden' });
+		await placeAtPortal(frame, 6, 1);
+		await frame.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+		await page.waitForTimeout(200);
+		await link.waitFor({ state: 'hidden' });
+		await placeAtPortal(frame, 0, 1);
+		await link.waitFor();
+		await placeAtPortal(frame, 6, 1);
+		await link.waitFor({ state: 'hidden' });
+		await placeAtPortal(frame, 0, 1);
+		await link.waitFor();
+	}
+	await page.screenshot({ path: 'artifacts/second-me-restored.png' });
+	console.log('Personal avatar portal passed: labels, destination and proximity updates after repeated page restores.');
+}
+async function verifyNewTabPortals(page, frame) {
+	const gameUrl = page.url();
+	for (const [index, url, label] of [
+		[0, 'https://blog.zhihaojiang.com/', '访问博客 ↗'],
+		[1, 'https://second-me.zhihaojiang.com/', '访问个人分身 ↗']
+	]) {
+		await placeAtPortal(frame, 0, index);
+		const link = frame.getByRole('link', { name: label });
+		await link.waitFor();
+		await page.context().route(`${url}**`, route => route.fulfill({ contentType: 'text/html', body: '<h1>Portal destination</h1>' }));
+		const popupReady = page.waitForEvent('popup');
+		await link.click();
+		const popup = await popupReady;
+		await popup.waitForURL(url);
+		assert.equal(await popup.getByRole('heading').innerText(), 'Portal destination');
+		assert.equal(page.url(), gameUrl, 'Opening a portal preserves the game page');
+		assert.equal(await popup.evaluate(() => window.opener), null);
+		await popup.close();
+		await placeAtPortal(frame, 6, index);
+		await link.waitFor({ state: 'hidden' });
+	}
+	console.log('Both portals open in new tabs; game page and proximity updates remain active.');
 }
 try {
 	const { context, page, frame } = await start({ width: 1440, height: 950 });
@@ -148,12 +196,13 @@ try {
 	await page.screenshot({ path: 'artifacts/original-desktop.png' });
 	await verifyNPCs(page, frame);
 	await verifyChecklist(page, frame, false, true);
+	await verifyPortalRestore(page, frame);
 	const info = await placeAtPortal(frame);
 	assert.equal(info.npcs, 20); assert.ok(info.hasSky && info.hasBones && info.offline);
 	const link = frame.getByRole('link', { name: '访问博客 ↗' });
 	await link.waitFor({ timeout: 10000 });
 	assert.equal(await link.getAttribute('href'), 'https://blog.zhihaojiang.com/');
-	assert.equal(await link.getAttribute('target'), '_top');
+	assert.equal(await link.getAttribute('target'), '_blank');
 	await page.waitForTimeout(3000);
 	await page.screenshot({ path: 'artifacts/original-cottage.png' });
 	await placeAtPortal(frame, 5);
@@ -161,11 +210,9 @@ try {
 	assert.equal(new URL(page.url()).origin, new URL(origin).origin, 'Entering and leaving does not navigate');
 	await placeAtPortal(frame);
 	await link.waitFor();
-	await page.route('https://blog.zhihaojiang.com/**', (route) => route.fulfill({ contentType: 'text/html', body: '<h1>Blog destination</h1>' }));
-	await link.click(); await page.waitForURL('https://blog.zhihaojiang.com/');
-	assert.equal(await page.getByRole('heading').innerText(), 'Blog destination', 'The project link leaves the iframe at the top level');
+	await verifyNewTabPortals(page, frame);
 	await context.close();
-	console.log('Desktop passed: original intro, player movement, 20 NPCs, skinning, sky, offline play, cottage proximity and explicit top-level blog navigation.');
+	console.log('Desktop passed: original intro, player movement, 20 NPCs, skinning, sky, offline play, cottage proximity and explicit new-tab portal navigation.');
 
 	const mobile = await start({ width: 390, height: 844 }, true);
 	await verifyChecklist(mobile.page, mobile.frame, true);

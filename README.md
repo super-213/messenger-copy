@@ -2,7 +2,7 @@
 
 首页现在运行 [Messenger](https://messenger.abeto.co/) 原站已发布的前端脚本和本地资源，保留原版人物、骨骼动画、20 个 NPC、地形、天空、阴影、描边、对话和控制方式。它不再使用之前手工重写的 Three.js 简化场景。
 
-本地副本使用原引擎的 **单人模式**，不连接原作的多人服务器。进入场景后，靠近小屋旁会出现博客入口，点击后打开 **https://blog.zhihaojiang.com**。
+本地副本使用原引擎的 **单人模式**，不连接原作的多人服务器。进入场景后，靠近小屋旁会出现博客入口，点击后在新标签页打开 **https://blog.zhihaojiang.com**。主广场带卫星天线的书店旁另有一个个人分身入口，靠近后显示「访问个人分身 ↗」，点击后在新标签页打开 **https://second-me.zhihaojiang.com/**。
 
 ## 运行
 
@@ -33,7 +33,7 @@ pnpm preview
   "url": "https://blog.zhihaojiang.com",
   "direction": [-0.40617493, -0.2838886, 0.86857883],
   "radius": 2.5,
-  "openInNewTab": false
+  "openInNewTab": true
 }
 ```
 

@@ -1,0 +1,11 @@
+[
+  {
+    "id": "blog",
+    "title": "博客",
+    "location": "小屋旁",
+    "url": "https://blog.zhihaojiang.com",
+    "direction": [-0.40617493, -0.2838886, 0.86857883],
+    "radius": 2.5,
+    "openInNewTab": false
+  }
+]

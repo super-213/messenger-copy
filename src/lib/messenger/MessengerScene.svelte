@@ -17,19 +17,24 @@
 	import { setGameplayWaterDepth, updateGameplayWaterMaterial } from './gameplayWater';
 	import { setTerrainLight } from './terrainMaterial';
 	import { setTreeLeavesLight, updateTreeLeavesMaterial } from './treeLeaves';
+	import { createGameplayController, type GameplayController, type PortalSnapshot } from './createGameplayController';
+	import { disposeScene } from './disposeScene';
+	import PortalHud from './PortalHud.svelte';
 
 	const scenePresets: Record<
 		SceneMode,
 		{ background: string; camera: [number, number, number]; minDist: number; maxDist: number; autoRotate: boolean }
 	> = {
 		intro: { background: '#dfe8ec', camera: [0, 6, 20], minDist: 8, maxDist: 40, autoRotate: true },
-		gameplay: { background: '#b8c9cf', camera: [0, 7, 22], minDist: 8, maxDist: 40, autoRotate: true },
+		gameplay: { background: '#b8c9cf', camera: [0, 7, 22], minDist: 8, maxDist: 40, autoRotate: false },
 		npcs: { background: '#151a22', camera: [0, 4.5, 11], minDist: 5, maxDist: 22, autoRotate: false }
 	};
 
 	let { mode = 'intro' }: { mode?: SceneMode } = $props();
 
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
+	let gameplay = $state.raw<GameplayController | null>(null);
+	let portal = $state.raw<PortalSnapshot | null>(null);
 
 	function mountWebGL(host: HTMLDivElement) {
 		const preset = scenePresets[mode];
@@ -39,19 +44,27 @@
 		const camera = new PerspectiveCamera(42, 1, 0.1, 500);
 		camera.position.set(...preset.camera);
 
-		const renderer = new WebGLRenderer({ antialias: true, alpha: false });
+		let renderer: WebGLRenderer;
+		try {
+			renderer = new WebGLRenderer({ antialias: true, alpha: false });
+		} catch (error) {
+			console.error('WebGL is unavailable', error);
+			status = 'error';
+			return;
+		}
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 		renderer.setSize(host.clientWidth, host.clientHeight);
 		renderer.shadowMap.enabled = mode === 'npcs';
 		host.appendChild(renderer.domElement);
 
 		const controls = new OrbitControls(camera, renderer.domElement);
+		controls.enabled = mode !== 'gameplay';
 		controls.enableDamping = true;
 		controls.minDistance = preset.minDist;
 		controls.maxDistance = preset.maxDist;
 		controls.target.set(0, mode === 'npcs' ? 1.2 : 0, 0);
 
-		scene.add(new AmbientLight(0xffffff, mode === 'npcs' ? 0.45 : mode === 'gameplay' ? 0.78 : 0.62));
+		scene.add(new AmbientLight(0xffffff, mode === 'npcs' ? 0.45 : mode === 'gameplay' ? 2.2 : 0.62));
 		const sun = new DirectionalLight(0xfff1dc, mode === 'npcs' ? 1.8 : 1.4);
 		sun.position.set(10, 16, 6);
 		if (mode === 'npcs') {
@@ -74,6 +87,7 @@
 			frame: 0,
 			lastFrame: performance.now()
 		};
+		let controller: GameplayController | null = null;
 
 		let sceneDepthTarget = createSceneDepthTarget(host.clientWidth, host.clientHeight);
 		const startedAt = performance.now();
@@ -110,7 +124,7 @@
 						import('./postProcessing')
 					]);
 					const bundle = await createGameplaySceneGroup(renderer);
-					if (token !== loadToken) return;
+					if (token !== loadToken) { disposeScene(bundle.group); bundle.lut.dispose(); return; }
 					runtime.sceneGroup = bundle.group;
 					runtime.terrainMaterial = bundle.terrainMaterial;
 					runtime.treeLeavesMaterial = bundle.treeLeavesMaterial;
@@ -126,12 +140,15 @@
 						host.clientHeight
 					);
 					scene.add(bundle.group);
+					controller = createGameplayController(bundle.group, camera, renderer.domElement, (snapshot) => { portal = snapshot; });
+					gameplay = controller;
+					scene.add(controller.group);
 					runtime.composer = createMessengerComposer(renderer, scene, camera, bundle.lut);
 					runtime.composer.resize(host.clientWidth, host.clientHeight);
 				} else if (mode === 'npcs') {
 					const { createNpcGalleryGroup } = await import('./createNpcGallery');
 					const bundle = await createNpcGalleryGroup(renderer);
-					if (token !== loadToken) return;
+					if (token !== loadToken) { disposeScene(bundle.group); return; }
 					runtime.sceneGroup = bundle.group;
 					runtime.npcMixers = bundle.mixers;
 					bundle.npcMaterial.uniforms.uLightPosition.value.copy(sun.position);
@@ -139,7 +156,7 @@
 				} else {
 					const { createIntroSceneGroup } = await import('./createIntroScene');
 					const bundle = await createIntroSceneGroup(renderer);
-					if (token !== loadToken) return;
+					if (token !== loadToken) { disposeScene(bundle.group); return; }
 					runtime.sceneGroup = bundle.group;
 					runtime.materials = bundle.materials;
 					setMessengerLight(runtime.materials, sun.position);
@@ -161,8 +178,9 @@
 			const delta = (now - runtime.lastFrame) / 1000;
 			runtime.lastFrame = now;
 
-			controls.update();
+			if (controls.enabled) controls.update();
 			const elapsed = (now - startedAt) / 1000;
+			controller?.update(delta, elapsed);
 			if (runtime.autoRotate && runtime.sceneGroup) runtime.sceneGroup.rotation.y += 0.0012;
 			if (runtime.materials) updateMessengerMaterials(runtime.materials, elapsed);
 			if (runtime.treeLeavesMaterial) updateTreeLeavesMaterial(runtime.treeLeavesMaterial, elapsed);
@@ -202,7 +220,9 @@
 			loadToken += 1;
 			cancelAnimationFrame(runtime.frame);
 			resizeObserver.disconnect();
+			controller?.dispose();
 			runtime.composer?.dispose();
+			disposeScene(scene);
 			sceneDepthTarget.dispose();
 			controls.dispose();
 			renderer.dispose();
@@ -219,11 +239,15 @@
 	aria-label="Messenger scene preview"
 >
 	{#if status === 'loading'}
-		<p class="status">Loading {mode} scene…</p>
+		<p class="status" role="status">正在准备星球…</p>
 	{:else if status === 'error'}
-		<p class="status error">Failed to load messenger assets.</p>
+		<p class="status error" role="alert">场景加载失败，请刷新重试。</p>
 	{/if}
 </div>
+
+{#if mode === 'gameplay'}
+	<PortalHud controller={gameplay} snapshot={portal} {status} />
+{/if}
 
 <style>
 	.messenger-canvas {

@@ -1,0 +1,12 @@
+#project-entry[hidden], .project-marker[hidden], .project-coordinates[hidden] { display: none; }
+#project-entry { position: fixed; z-index: 20; bottom: max(2.5rem, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 2rem; max-width: calc(100vw - 3rem); box-sizing: border-box; padding: 1rem 1.25rem; border: 2px solid #405860; box-shadow: 4px 5px 0 #405860; background: #f8f8f8; color: #243a43; font: 15px/1.5 system-ui, sans-serif; }
+#project-entry p { margin: 0 0 0.15rem; font-size: 11px; color: #536e70; white-space: nowrap; }
+#project-entry strong { font-size: 19px; }
+#project-entry a { display: block; padding: 0.65rem 1rem; min-height: 44px; box-sizing: border-box; border: 2px solid #405860; background: #66bde6; color: #1c3541; text-decoration: none; font-weight: 600; white-space: nowrap; }
+#project-entry a:hover { background: #91d4ec; }
+#project-entry a:focus-visible { outline: 3px solid #d59b27; outline-offset: 4px; }
+.project-marker { position: fixed; z-index: 10; transform: translate(-50%, -100%); padding: 0.4rem 0.75rem; border: 2px solid #405860; background: #f8f8f8; color: #243a43; box-shadow: 2px 3px 0 #405860; font: 13px system-ui, sans-serif; white-space: nowrap; pointer-events: none; }
+.project-marker.active { background: #f0d653; }
+.project-coordinates { position: fixed; z-index: 30; left: 1rem; top: 1rem; background: #fff; color: #243a43; padding: 0.5rem; font: 11px monospace; user-select: all; }
+.project-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 600px) { #project-entry { bottom: max(1.5rem, env(safe-area-inset-bottom)); gap: 1.25rem; padding: 0.85rem 1rem; } }

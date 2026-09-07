@@ -1,0 +1,270 @@
+{
+  "intro": {
+    "name": "MESSENGER",
+    "texts": [
+      "Looks like I slept in... I better start today's deliveries.",
+      "I've got five on the list. Hopefully they're easy to find.",
+      "Alright, I better get going."
+    ]
+  },
+  "npcs": {
+    "office-worker": {
+      "name": "Walking Man",
+      "texts": [
+        "Sorry, I'm on my lunch break."
+      ]
+    },
+    "office-worker-2": {
+      "name": "Office Worker",
+      "texts": [
+        "Senior associate executive chief vice director...",
+        "It has a nice ring to it, don't you think?"
+      ]
+    },
+    "chef": {
+      "name": "Shop Keeper",
+      "texts": [
+        "Have you seen my daughter? I thought she'd be home by now..."
+      ]
+    },
+    "caveman": {
+      "name": "Cave Man",
+      "texts": [
+        "Maybe I should just call in sick..."
+      ]
+    },
+    "boss": {
+      "name": "Boss",
+      "texts": [
+        "Oh my..."
+      ]
+    },
+    "flower-lady": {
+      "name": "Flower Lady",
+      "texts": [
+        "Tulips can take a while to bloom."
+      ]
+    },
+    "scout": {
+      "name": "Young Kid",
+      "texts": [
+        "I think I hear my dad calling..."
+      ]
+    },
+    "threekid": {
+      "name": "Hacker Girl",
+      "texts": [
+        "Hello.",
+        "Have you heard of a thing called three.js?",
+        "Well... I suppose most people don't know about 3D experiences.",
+        "They're an art form that combines creativity and technology.",
+        "It's like painting, but with code!"
+      ]
+    },
+    "factory-worker-a": {
+      "name": "Factory Worker",
+      "texts": [
+        "Shipments in... shipments out..."
+      ]
+    },
+    "factory-worker-b": {
+      "name": "Tengo",
+      "texts": [
+        "The new guy is late again."
+      ]
+    },
+    "female-scientist": {
+      "name": "Doctor Frebi",
+      "texts": [
+        "We'll need to build here... here... and also here..."
+      ]
+    },
+    "factory-worker-c": {
+      "name": "Getave",
+      "texts": [
+        ""
+      ]
+    },
+    "alien": {
+      "name": "Pale Man",
+      "texts": [
+        "I think I've seen you somewhere before..."
+      ]
+    },
+    "male-scientist": {
+      "name": "Doctor Frieb",
+      "texts": [
+        "Let's see... First I'll need to calculate the radius of the bike tire..."
+      ]
+    },
+    "diver": {
+      "name": "Captain Steve",
+      "texts": [
+        "Come on... open up..."
+      ]
+    },
+    "mountainman": {
+      "name": "Mountain Guy",
+      "texts": [
+        "Do you hear that sound? Silence...",
+        "I mean, there's the wind chimes too, but it's mostly silence..."
+      ]
+    },
+    "oldwoman": {
+      "name": "Old Woman",
+      "texts": [
+        "Thank you for delivering my offering."
+      ]
+    },
+    "musician": {
+      "name": "Dave the Musician",
+      "texts": [
+        "Have you heard this one before?"
+      ]
+    },
+    "fox": {
+      "name": "Fox",
+      "texts": [
+        ""
+      ]
+    },
+    "owl": {
+      "name": "Owl",
+      "texts": [
+        ""
+      ]
+    }
+  },
+  "quests": {
+    "quest-employee": {
+      "label": "Falling off the corporate ladder",
+      "steps": [
+        {
+          "npcId": "office-worker-2",
+          "texts": [
+            "Thank god you're here! I sent a letter to my boss earlier, but I need to get it back before he sees it...",
+            "He lives at the red cliff house. Do you think he's read it yet?"
+          ]
+        },
+        {
+          "npcId": "boss",
+          "texts": [
+            "One of my employees wrote this? I can't believe it... this... is...",
+            "...hilarious. Wow, he's really roasting me. Maybe he's manager material after all...",
+            "Can you take this note back to him? He works in the main square."
+          ]
+        },
+        {
+          "npcId": "office-worker-2",
+          "texts": [
+            "I'm getting... promoted?",
+            "Wow, who would have known that acting on my lowest instincts would help me advance in the corporate world."
+          ]
+        }
+      ]
+    },
+    "quest-caveman": {
+      "label": "A man who's hiding from something",
+      "steps": [
+        {
+          "npcId": "caveman",
+          "texts": [
+            "Hey there! Can you please take this postcard to my wife? She sells flowers in the main square.",
+            "I'd give it to her myself but I... uh... have a bad knee at the moment..."
+          ]
+        },
+        {
+          "npcId": "flower-lady",
+          "texts": [
+            "Oh, a postcard from my husband!",
+            "He's on an overseas business trip at the moment, visiting all kinds of exotic places!",
+            "Look, between you and me, I know he's living in a cave in the forest... I hope his midlife crisis passes soon...",
+            "Would you mind bringing him these clean clothes? Don't say they're from me. Just tell him he won a prize."
+          ]
+        },
+        {
+          "npcId": "caveman",
+          "texts": [
+            "Wow, another prize?",
+            "Just in time, too. I'm down to my last pair of underwear."
+          ]
+        }
+      ]
+    },
+    "quest-scientists": {
+      "label": "Scientists and mixed-up deliveries",
+      "steps": [
+        {
+          "npcId": "factory-worker-a",
+          "texts": [
+            "Hey, can you help me with something? We're short on staff lately and, well, some of our mail went to the wrong address by mistake...",
+            "Go find Doctor Frieb and see if he's received any packages lately. He lives at the base of the mountain temple."
+          ]
+        },
+        {
+          "npcId": "male-scientist",
+          "texts": [
+            "Hello! Yes, I opened some mail by mistake earlier. A \"planet gravity data analysis\", or something...",
+            "They probably mixed me up with Doctor Frebi at Capital Corp...",
+            "...wait, does that mean MY ORDER went to Dr Frebi? Oh no!!!",
+            "I... uh... ordered the wrong thing anyway... Tell her I don't need it anymore..."
+          ]
+        },
+        {
+          "npcId": "female-scientist",
+          "texts": [
+            "Oh hey, you work for the delivery company? I've been meaning to talk to you guys...",
+            "Do you know why I received 63 packets of instant noodles? Was that meant to go to the grocery store or something?",
+            "You don't know anything about that? Oh well. Thanks for the package."
+          ]
+        }
+      ]
+    },
+    "quest-temple": {
+      "label": "An offering to the mountain temple",
+      "steps": [
+        {
+          "npcId": "oldwoman",
+          "texts": [
+            "Excuse me, could you please take this offering up to the mountain temple for me?",
+            "I have trouble making it up the slope by myself these days."
+          ]
+        },
+        {
+          "npcId": "mountainman",
+          "texts": [
+            "Oh, pastries and sake?",
+            "My favourite."
+          ]
+        }
+      ]
+    },
+    "quest-musician": {
+      "label": "A note lost at sea",
+      "steps": [
+        {
+          "npcId": "diver",
+          "texts": [
+            "Check this out! I was diving for oysters earlier and found these old lock boxes buried in the sand.",
+            "One of them had a letter inside. It's a bit wet, but I can make out the name Dave at the top.",
+            "Pretty crazy huh? I know a guy called Dave. Do you think it could be the same one?",
+            "He's probably down at smelly falls, if you want to take it to him."
+          ]
+        },
+        {
+          "npcId": "musician",
+          "texts": [
+            "A letter for me? From under the sea? The one who wrote it... is me!",
+            "Let's see what I wrote to myself all those years ago...",
+            "\"Dear Future Dave...\"",
+            "\"Keep practicing every day...\"",
+            "\"Get plenty of sunshine...\"",
+            "\"Take care of your hair. Let it grow wild and free. Your hair is your soul and the most defining feature of your personality.\"",
+            "Well...",
+            "...two out of three ain't bad."
+          ]
+        }
+      ]
+    }
+  }
+}

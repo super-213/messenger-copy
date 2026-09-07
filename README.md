@@ -66,6 +66,14 @@ pnpm preview
 
 旧版本仅供比较：`/prototype` 是之前的简化博客入口，`/preview` 是学习性场景预览，说明见 `docs/prototype.md`。
 
+## 部署到 Cloudflare Pages
+
+```sh
+pnpm deploy
+```
+
+也可运行 `npm run deploy`。命令会先构建（包括准备和检查手机资源），再使用 `wrangler.jsonc` 中的 Pages 项目名与输出目录上传。首次使用时按 Wrangler 提示登录 Cloudflare；登录账户需要有对应项目的部署权限。
+
 ## 验证
 
 构建并启动预览后运行：
@@ -75,6 +83,15 @@ PLAYWRIGHT_CHANNEL=chrome node scripts/verify-original.mjs http://127.0.0.1:4173
 ```
 
 也可不设 `PLAYWRIGHT_CHANNEL`，使用 Playwright 安装的 Chromium。验证包含原版进入场景、人物行走、NPC 和骨骼加载、桌面/手机入口、区域进出及顶层跳转。测试拦截所有外部请求，不访问博客或多人服务；截图保存在 `artifacts/`。
+
+iPhone Safari 还需要单独验证 WebKit 及其资源分支：
+
+```sh
+pnpm exec playwright install webkit
+node scripts/verify-safari.mjs http://127.0.0.1:4173
+```
+
+此检查使用 iPhone 13 的 UA、屏幕参数和触摸操作，确认进入游戏并显示开场对白，同时检查低内存模型和 MP3 音频确实被请求。桌面浏览器仅缩小视口不会触发这些分支。`prepare-original.mjs` 会检查 36 个手机专用 Draco 模型及 OGG 对应的 Safari MP3 文件；缺失时中止构建。这些资源随 `reference/messenger.abeto.co/assets` 一同保存和部署，无需运行时访问原站。WebKit 模拟不能替代真机最终验收。
 
 ## 来源与许可
 

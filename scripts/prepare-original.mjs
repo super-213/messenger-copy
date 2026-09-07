@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import ts from 'typescript';
 import { localizeDialogues } from './localize-dialogues.mjs';
+import { assertMobileAssets } from './mobile-assets.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const source = path.join(root, 'reference/messenger.abeto.co');
@@ -16,6 +17,7 @@ function replaceChecked(source, before, after, expected = 1) {
 	return source.replaceAll(before, after);
 }
 
+await assertMobileAssets(path.join(source, 'assets'));
 await mkdir(target, { recursive: true });
 await cp(path.join(source, 'assets'), path.join(target, 'assets'), { recursive: true });
 const manifest = [];

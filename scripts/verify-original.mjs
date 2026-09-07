@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdir, readFile } from 'node:fs/promises';
-import { chromium } from 'playwright';
+import { chromium, devices } from 'playwright';
 
 const origin = process.argv[2] ?? 'http://127.0.0.1:4173';
 const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
@@ -9,7 +9,8 @@ const dialogueConfig = JSON.parse(await readFile(new URL('../src/lib/original/di
 let activePage;
 await mkdir('artifacts', { recursive: true });
 async function start(viewport, mobile = false) {
-	const context = await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile });
+	// Include the iPhone user agent and screen size: viewport-only emulation skips low-memory assets.
+	const context = await browser.newContext({ ...(mobile ? devices['iPhone 13'] : {}), viewport, isMobile: mobile, hasTouch: mobile });
 	// Prove the built copy works without contacting the original site or any remote service.
 	await context.route('**/*', (route) => {
 		const url = route.request().url();

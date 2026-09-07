@@ -33,6 +33,9 @@ async function prepare(directory) {
 		if (entry.name === 'App3D-BLRWK1h9.js') {
 			code = localizeDialogues(code, dialogueConfig);
 			code = 'import { LocalizedDialogue } from "../dialogue-ui.js";\n' + code;
+			code = 'import { BilingualChecklist } from "../checklist-ui.js";\n' + code;
+			const labels = Object.fromEntries(Object.entries(dialogueConfig.quests).map(([id, quest]) => [id, { zh: quest.label, en: quest.labelEn }]));
+			code = replaceChecked(code, 'new checkList(this)', `new BilingualChecklist(this,events,QUESTINFO,new dot(this),${JSON.stringify(labels)})`);
 			code = replaceChecked(code, 'new dialogBox(this)', 'new LocalizedDialogue(this,events)');
 			// The original CDN accepts double slashes; a local static server does not.
 			code = replaceChecked(code, 'geometryLoader.load("/planets/intro/points.drc")', 'geometryLoader.load("planets/intro/points.drc")');
@@ -50,11 +53,11 @@ await prepare(path.join(target, 'assets'));
 const html = (await readFile(path.join(source, 'index.html'), 'utf8'))
 	.replaceAll('https://messenger.abeto.co/', '/original/')
 	.replace('</head>', '<link rel="stylesheet" href="/original/portal.css">\n<link rel="stylesheet" href="/original/dialogue-ui.css">\n<script type="module" src="/original/portal.js"></script>\n</head>');
-await writeFile(path.join(target, 'index.html'), html);
-for (const file of ['portal.css', 'portals.json', 'dialogue-ui.css']) {
+await writeFile(path.join(target, 'index.html'), html.replace('</head>', '<link rel="stylesheet" href="/original/checklist-ui.css">\n</head>'));
+for (const file of ['portal.css', 'portals.json', 'dialogue-ui.css', 'checklist-ui.css']) {
 	await cp(path.join(root, 'src/lib/original', file), path.join(target, file));
 }
-for (const module of ['portal', 'dialogue-ui']) {
+for (const module of ['portal', 'dialogue-ui', 'checklist-ui']) {
 	const bridge = await readFile(path.join(root, `src/lib/original/${module}.ts`), 'utf8');
 	await writeFile(path.join(target, `${module}.js`), ts.transpileModule(bridge, {
 		compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 }

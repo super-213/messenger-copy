@@ -103,6 +103,28 @@ async function verifyNPCs(page, frame) {
 	assert.deepEqual(progress, [true, true, true], 'Translated dialogue completes the original quest and saves its progress');
 	console.log('Chinese dialogue passed: idle speech bubble, pointer-selected NPCs, all three steps of the employee quest and saved progress.');
 }
+async function verifyChecklist(page, frame, mobile = false, completed = false) {
+	await frame.evaluate(() => window.__originalMessenger.events.emit('ui_quest_log_toggle'));
+	const panel = frame.locator('#bilingual-checklist');
+	await panel.waitFor();
+	assert.equal(await panel.locator('li').count(), 5);
+	for (const [id, quest] of Object.entries(dialogueConfig.quests)) {
+		const row = panel.locator(`[data-quest-id="${id}"]`);
+		assert.equal(await row.locator('[lang="zh-CN"]').innerText(), quest.label);
+		assert.equal(await row.locator('[lang="en"]').innerText(), quest.labelEn);
+	}
+	if (completed) {
+		const row = panel.locator('[data-quest-id="quest-employee"]');
+		assert.match(await row.getAttribute('class'), /is-complete/);
+		assert.equal((await row.locator('.quest-progress').innerText()).trim(), '(3/3)');
+	}
+	const rect = await panel.boundingBox();
+	const viewport = page.viewportSize();
+	assert.ok(rect.x >= 0 && rect.x + rect.width <= viewport.width && rect.y >= 0 && rect.y + rect.height <= viewport.height, 'Bilingual checklist fits the viewport');
+	await page.screenshot({ path: `artifacts/checklist-${mobile ? 'mobile' : 'desktop'}.png` });
+	await frame.evaluate(() => window.__originalMessenger.events.emit('ui_quest_log_toggle'));
+	await panel.waitFor({ state: 'hidden' });
+}
 async function placeAtPortal(frame, distance = 0) {
 	return frame.evaluate(async (distance) => {
 		const config = (await fetch('/original/portals.json').then((r) => r.json()))[0];
@@ -125,6 +147,7 @@ try {
 	assert.ok(Math.hypot(...after.map((n, i) => n - before[i])) > 0.1, 'The original character walks using the keyboard');
 	await page.screenshot({ path: 'artifacts/original-desktop.png' });
 	await verifyNPCs(page, frame);
+	await verifyChecklist(page, frame, false, true);
 	const info = await placeAtPortal(frame);
 	assert.equal(info.npcs, 20); assert.ok(info.hasSky && info.hasBones && info.offline);
 	const link = frame.getByRole('link', { name: '访问博客 ↗' });
@@ -145,6 +168,7 @@ try {
 	console.log('Desktop passed: original intro, player movement, 20 NPCs, skinning, sky, offline play, cottage proximity and explicit top-level blog navigation.');
 
 	const mobile = await start({ width: 390, height: 844 }, true);
+	await verifyChecklist(mobile.page, mobile.frame, true);
 	await placeAtPortal(mobile.frame);
 	await mobile.frame.getByRole('link', { name: '访问博客 ↗' }).waitFor();
 	await mobile.page.waitForTimeout(3000);

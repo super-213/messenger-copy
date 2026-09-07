@@ -1,0 +1,22 @@
+#bilingual-checklist[hidden] { display: none; }
+#bilingual-checklist {
+  position: fixed; z-index: 35; box-sizing: border-box;
+  padding: 25px 28px; overflow-y: auto; overscroll-behavior: contain;
+  border: 3px solid #40545f; background: #f8f8f8; color: #25383e;
+  box-shadow: 6px 7px 0 #647a87;
+  font: 19px/1.5 "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+#bilingual-checklist h2 { margin: 0 0 22px; font-size: 20px; }
+#bilingual-checklist ol { margin: 0; padding-left: 26px; }
+#bilingual-checklist li { padding-left: 3px; margin-bottom: 20px; overflow-wrap: anywhere; }
+#bilingual-checklist li:last-child { margin-bottom: 0; }
+#bilingual-checklist small { display: block; font-size: 15px; line-height: 1.45; margin-top: 3px; }
+#bilingual-checklist .quest-progress { white-space: nowrap; font-variant-numeric: tabular-nums; }
+#bilingual-checklist .is-inactive { color: #6d6d6d; }
+#bilingual-checklist .is-complete { text-decoration: line-through; }
+@media (max-width: 600px) {
+  #bilingual-checklist { padding: 18px 16px; font-size: 16px; }
+  #bilingual-checklist h2 { font-size: 17px; margin-bottom: 16px; }
+  #bilingual-checklist li { margin-bottom: 14px; }
+  #bilingual-checklist small { font-size: 13px; }
+}

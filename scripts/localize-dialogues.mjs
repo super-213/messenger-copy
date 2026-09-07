@@ -22,6 +22,9 @@ export function localizeDialogues(code, config) {
 					const id = get(quest, 'id').text, translated = config.quests[id], steps = get(quest, 'steps').elements;
 					if (!translated || translated.steps?.length !== steps.length) throw new Error(`Quest ${id}: preserve the original step count and order.`);
 					seenQuests.add(id);
+					for (const field of ['label', 'labelEn']) {
+						if (typeof translated[field] !== 'string' || !translated[field].trim()) throw new Error(`Quest ${id}: ${field} must be a non-empty string.`);
+					}
 					steps.forEach((step, index) => {
 						const entry = translated.steps[index];
 						if (entry.npcId !== get(step, 'id').text) throw new Error(`Quest ${id} step ${index}: npcId must not change.`);

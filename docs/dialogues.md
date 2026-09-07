@@ -67,6 +67,7 @@
 ```json
 "quest-employee": {
   "label": "职场晋升奇遇",
+  "labelEn": "Falling off the corporate ladder",
   "steps": [
     { "npcId": "office-worker-2", "texts": ["这是任务第一步要说的话。"] },
     { "npcId": "boss", "texts": ["这是第二步要说的话。"] },
@@ -75,7 +76,7 @@
 }
 ```
 
-可以修改 `texts`、增删每一步里的句子，但每步至少保留一页。不要增删/重排 `steps` 或更改 `npcId`；这些字段对应任务触发器、物品交接和存档。构建时会检查 ID 和步骤结构。`label` 只是方便编辑时识别的备注。
+可以修改 `texts`、增删每一步里的句子，但每步至少保留一页。不要增删/重排 `steps` 或更改 `npcId`；这些字段对应任务触发器、物品交接和存档。构建时会检查 ID 和步骤结构。`label` 是任务清单中显示的中文标题，`labelEn` 是英文标题；两者同时展示，共用实时进度计数。修改这两个字段即可自定义截图里的清单文案，两个字段都不能留空。
 
 五条任务线分别是 `quest-employee`、`quest-caveman`、`quest-scientists`、`quest-temple` 和 `quest-musician`。
 
@@ -109,7 +110,7 @@ location.reload();
 
 `scripts/localize-dialogues.mjs` 用 TypeScript 语法树定位文案，只替换对应的数据字段；`prepare-original.mjs` 在开发/构建前应用配置。原版英文字体是预生成的专用字形，不能直接显示任意汉字，因此 `src/lib/original/dialogue-ui.ts` / `dialogue-ui.css` 使用系统中文字体显示对话框和头顶气泡，并接入原版对话事件。正文按整页显示，继续按钮仍驱动原版任务状态机；NPC 动画、物品和进度由原引擎处理。文案以纯文本显示，不执行 HTML。
 
-此次汉化范围是**人物姓名、开场、普通闲聊和任务对白**。地图上的模型文字、菜单、任务清单、任务完成提示等原版 UI 仍为英文。
+此次汉化范围是**人物姓名、开场、普通闲聊和任务对白**。任务清单已支持中英同时展示（中文在上、英文在下），保留进度、未开始变灰和完成划线。对应实现为 `src/lib/original/checklist-ui.ts` / `checklist-ui.css`，通过 `prepare-original.mjs` 接入原版 `QUESTINFO` 进度。清单标题“任务清单 / CHECKLIST”位于 `checklist-ui.ts`。地图上的模型文字、其他菜单、任务完成提示等原版 UI 仍为英文。
 
 验证命令：
 

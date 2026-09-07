@@ -27,6 +27,8 @@ test('editable line counts and literal markup are safe while quest routing stays
 test('invalid text, missing/unknown NPCs and altered quest steps fail loudly', () => {
 	for (const mutate of [
 		(c) => { c.intro.texts = []; },
+		(c) => { c.quests['quest-employee'].label = ''; },
+		(c) => { delete c.quests['quest-employee'].labelEn; },
 		(c) => { c.npcs.boss.texts = 'not an array'; },
 		(c) => { delete c.npcs.boss; },
 		(c) => { c.npcs.typo = c.npcs.boss; },

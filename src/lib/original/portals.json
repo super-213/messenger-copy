@@ -16,5 +16,14 @@
     "direction": [0.96696205, 0.2423811, 0.07896707],
     "radius": 2.5,
     "openInNewTab": true
+  },
+  {
+    "id": "random-universe",
+    "title": "随机宇宙",
+    "location": "咖啡店旁",
+    "url": "https://random-universe.zhihaojiang.com/",
+    "direction": [0.75813469, 0.64504465, 0.09565142],
+    "radius": 2.5,
+    "openInNewTab": true
   }
 ]

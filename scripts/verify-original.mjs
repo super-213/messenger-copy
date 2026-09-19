@@ -6,6 +6,7 @@ const origin = process.argv[2] ?? 'http://127.0.0.1:4173';
 const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
 const errors = [], failed = [], external = [], sockets = [];
 const dialogueConfig = JSON.parse(await readFile(new URL('../src/lib/original/dialogues.json', import.meta.url), 'utf8'));
+const portalConfig = JSON.parse(await readFile(new URL('../src/lib/original/portals.json', import.meta.url), 'utf8'));
 let activePage;
 await mkdir('artifacts', { recursive: true });
 async function start(viewport, mobile = false) {
@@ -141,8 +142,10 @@ async function placeAtPortal(frame, distance = 0, index = 0) {
 	}, { distance, index });
 }
 async function verifyPortalRestore(page, frame) {
+	const index = portalConfig.findIndex((portal) => portal.id === 'second-me');
+	assert.notEqual(index, -1, 'Personal avatar portal exists');
 	const link = frame.getByRole('link', { name: '访问个人分身 ↗' });
-	await placeAtPortal(frame, 0, 1);
+	await placeAtPortal(frame, 0, index);
 	await link.waitFor();
 	assert.equal(await link.getAttribute('href'), 'https://second-me.zhihaojiang.com/');
 	assert.equal(await link.getAttribute('target'), '_blank');
@@ -151,15 +154,15 @@ async function verifyPortalRestore(page, frame) {
 	for (let visit = 0; visit < 2; visit++) {
 		await frame.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })));
 		await link.waitFor({ state: 'hidden' });
-		await placeAtPortal(frame, 6, 1);
+		await placeAtPortal(frame, 6, index);
 		await frame.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
 		await page.waitForTimeout(200);
 		await link.waitFor({ state: 'hidden' });
-		await placeAtPortal(frame, 0, 1);
+		await placeAtPortal(frame, 0, index);
 		await link.waitFor();
-		await placeAtPortal(frame, 6, 1);
+		await placeAtPortal(frame, 6, index);
 		await link.waitFor({ state: 'hidden' });
-		await placeAtPortal(frame, 0, 1);
+		await placeAtPortal(frame, 0, index);
 		await link.waitFor();
 	}
 	await page.screenshot({ path: 'artifacts/second-me-restored.png' });
@@ -167,13 +170,15 @@ async function verifyPortalRestore(page, frame) {
 }
 async function verifyNewTabPortals(page, frame) {
 	const gameUrl = page.url();
-	for (const [index, url, label] of [
-		[0, 'https://blog.zhihaojiang.com/', '访问博客 ↗'],
-		[1, 'https://second-me.zhihaojiang.com/', '访问个人分身 ↗']
-	]) {
+	for (const [index, portal] of portalConfig.entries()) {
+		assert.equal(portal.openInNewTab, true, `${portal.id} is configured for a new tab`);
+		const url = new URL(portal.url).href;
+		const label = `访问${portal.title} ↗`;
 		await placeAtPortal(frame, 0, index);
 		const link = frame.getByRole('link', { name: label });
 		await link.waitFor();
+		assert.equal(await link.getAttribute('href'), url);
+		assert.equal(await link.getAttribute('target'), '_blank');
 		await page.context().route(`${url}**`, route => route.fulfill({ contentType: 'text/html', body: '<h1>Portal destination</h1>' }));
 		const popupReady = page.waitForEvent('popup');
 		await link.click();
@@ -186,7 +191,7 @@ async function verifyNewTabPortals(page, frame) {
 		await placeAtPortal(frame, 6, index);
 		await link.waitFor({ state: 'hidden' });
 	}
-	console.log('Both portals open in new tabs; game page and proximity updates remain active.');
+	console.log(`All ${portalConfig.length} configured portals open in new tabs; game page and proximity updates remain active.`);
 }
 try {
 	const { context, page, frame } = await start({ width: 1440, height: 950 });

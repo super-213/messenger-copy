@@ -68,11 +68,7 @@ pnpm preview
 
 ## 部署到 Cloudflare Pages
 
-```sh
-pnpm deploy
-```
-
-也可运行 `npm run deploy`。命令会先构建（包括准备和检查手机资源），再使用 `wrangler.jsonc` 中的 Pages 项目名与输出目录上传。首次使用时按 Wrangler 提示登录 Cloudflare；登录账户需要有对应项目的部署权限。
+通过 Git 集成部署：提交修改后运行 `git push`，由 Cloudflare Pages 自动构建和发布。构建会准备并检查手机资源。
 
 ## 验证
 

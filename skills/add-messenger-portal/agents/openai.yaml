@@ -1,0 +1,5 @@
+interface:
+  display_name: "添加 Messenger 域名入口"
+  short_description: "在 Messenger 星球建筑旁新增、校准并验证域名入口"
+  default_prompt: "Use $add-messenger-portal to add and verify a new domain entrance beside a specified Messenger building."
+

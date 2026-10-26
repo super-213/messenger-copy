@@ -16,7 +16,9 @@
 		"reference:discover": "python3 scripts/discover-assets.py",
 		"reference:shaders": "python3 scripts/extract-shaders.py",
 		"reference:capture": "bash scripts/capture-gameplay-browser.sh",
-		"original:prepare": "node scripts/prepare-original.mjs"
+		"original:prepare": "node scripts/prepare-original.mjs",
+		"test:pwa": "node scripts/verify-pwa.mjs",
+		"pwa:icons": "node scripts/generate-pwa-icons.mjs"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-cloudflare": "7.2.9",

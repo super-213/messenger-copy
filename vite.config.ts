@@ -17,7 +17,10 @@ export default defineConfig({
 			adapter: adapter({
 				// Group game assets to stay within Pages' 100 routing rules.
 				routes: {
-					exclude: ['<build>', '<prerendered>', '/original/*', '/messenger/*', '/draco/*', '/robots.txt']
+					exclude: [
+						'<build>', '<prerendered>', '/original/*', '/messenger/*', '/draco/*',
+						'/robots.txt', '/service-worker.js', '/manifest.webmanifest', '/icons/*'
+					]
 				}
 			}),
 			experimental: { remoteFunctions: true, handleRenderingErrors: true }

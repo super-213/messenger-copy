@@ -21,6 +21,25 @@ pnpm preview
 
 `dev` 和 `build` 会自动运行 `scripts/prepare-original.mjs`，从 `reference/messenger.abeto.co/assets` 生成 `static/original`。生成目录已加入 `.gitignore`，不要直接编辑其中的文件。现有版本所需资源已保存在仓库，生成和浏览不需要从原站拉取资源。
 
+## PWA 安装与离线使用
+
+生产构建支持 PWA：在 HTTPS 网站（本地可用 `localhost` / `127.0.0.1`）打开首页后，Chrome / Edge 可从浏览器菜单安装应用；iPhone / iPad Safari 可用「分享 → 添加到主屏幕」。安装后以独立窗口打开。
+
+首次联网访问会缓存首页、应用脚本、原版游戏 iframe 及全部桌面和手机游戏资源，约 36 MB，包含模型、音频和 Web Worker。缓存完成后，可以断网重新打开首页、进入场景和游玩；不需要先玩遍各个场景。首次下载尚未完成时无法保证离线加载。外部博客和个人分身链接仍需网络；旧的 `/preview`、`/prototype` 比较页面不在离线支持范围内。
+
+每次构建使用独立缓存。新版本下载完成后会等待旧页面和应用窗口全部关闭，再在下次打开时接管；更新不会中断当前游戏，激活时只清理本应用的旧缓存。游戏存档仍保存在原有的 `localStorage` 中。缓存下载失败时不会激活不完整的版本，下次联网访问会重试。
+
+Service Worker 由 SvelteKit 自动注册，仅在生产构建中启用；开发服务器不会安装。先执行 `pnpm build`，在另一个终端启动 `pnpm preview`，随后运行浏览器检查：
+
+```sh
+pnpm build
+PLAYWRIGHT_CHANNEL=chrome pnpm test:pwa
+```
+
+也可省略 `PLAYWRIGHT_CHANNEL`，使用已安装的 Playwright Chromium。测试检查浏览器安装条件、图标尺寸、全部游戏资源的预缓存、旧缓存清理，并在桌面和 iPhone 配置下断网新开页面、进入游戏及显示开场对白。可在 Chrome DevTools → Application → Service Workers 查看激活状态，在 Cache Storage 查看 `messenger-pwa-*` 缓存。
+
+图标源文件为 `src/lib/assets/favicon.svg`，修改后运行 `PLAYWRIGHT_CHANNEL=chrome pnpm pwa:icons` 重新生成 `static/icons/` 中的 PNG，并提交这些文件。普通构建直接使用已生成的图标，无需运行浏览器。根目录 `_headers` 为 Cloudflare Pages 配置 Service Worker 和 Manifest 的重新验证策略。
+
 ## 配置博客入口
 
 修改 `src/lib/original/portals.json`，然后重启开发服务器或重新构建：

@@ -9,10 +9,12 @@ const CACHE = `${CACHE_PREFIX}${version}`;
 // source-manifest.json is a build diagnostic, not a game dependency.
 // Hosting configuration files such as _headers are not public assets on Pages.
 const gameFiles = files.filter((file) =>
-	file === '/manifest.webmanifest' || file.startsWith('/icons/') || file.startsWith('/draco/') ||
+	file === '/manifest.webmanifest' || file === '/pwa-register.js' || file.startsWith('/icons/') || file.startsWith('/draco/') ||
 	(file.startsWith('/original/') && file !== '/original/source-manifest.json')
 );
-const ASSETS = [...new Set(['/', ...build, ...gameFiles])];
+// Pages redirects index.html to its directory URL. Cache the final URL so both
+// first visits and offline visits can load the iframe without that round trip.
+const ASSETS = [...new Set(['/', ...build, ...gameFiles.map((file) => file === '/original/index.html' ? '/original/' : file)])];
 const paths = new Set(ASSETS);
 
 worker.addEventListener('install', (event) => {
@@ -47,9 +49,10 @@ worker.addEventListener('fetch', (event) => {
 	if (request.method !== 'GET' || url.origin !== worker.location.origin) return;
 	// Query parameters (including ?debug) do not change these static resources or
 	// the homepage shell. Never substitute the homepage for an unknown URL/404.
-	if (!paths.has(url.pathname)) return;
+	const pathname = url.pathname === '/original/index.html' ? '/original/' : url.pathname;
+	if (!paths.has(pathname)) return;
 	event.respondWith((async () => {
 		const cache = await caches.open(CACHE);
-		return (await cache.match(url.pathname)) ?? fetch(request);
+		return (await cache.match(pathname)) ?? fetch(request);
 	})());
 });

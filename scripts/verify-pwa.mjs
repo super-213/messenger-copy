@@ -62,7 +62,7 @@ for (const mobile of [false, true]) {
 		const originalFiles = await readdir(new URL('../static/original/', import.meta.url), { recursive: true, withFileTypes: true });
 		for (const file of originalFiles.filter((entry) => entry.isFile() && entry.name !== 'source-manifest.json')) {
 			const path = join(file.parentPath, file.name).split('/static/')[1];
-			assert.ok(cacheInfo.paths.includes(`/${path}`), `Precached before gameplay: ${path}`);
+			assert.ok(cacheInfo.paths.includes(path === 'original/index.html' ? '/original/' : `/${path}`), `Precached before gameplay: ${path}`);
 		}
 		assert.ok(cacheInfo.paths.includes('/'));
 		assert.ok(!cacheInfo.paths.includes('/_headers'));
@@ -92,7 +92,7 @@ for (const mobile of [false, true]) {
 		else await page.mouse.click(viewport.width / 2, viewport.height * 0.868, { delay: 100 });
 		await frame.waitForFunction(() => window.__originalMessenger?.controller.state === 'present', null, { timeout: 90000 });
 		await frame.locator('#localized-dialogue').waitFor({ state: 'visible', timeout: 30000 });
-		assert.ok(servedByWorker.has('/original/index.html'), 'Game iframe is served by the Service Worker');
+		assert.ok(servedByWorker.has('/original/'), 'Game iframe is served by the Service Worker');
 		if (mobile) {
 			assert.ok(requested.has('/original/assets/geometries/planets/present/low/full_0.drc'));
 			assert.ok(requested.has('/original/assets/audio/music/bgmusic-mobile.mp3'));

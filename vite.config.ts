@@ -8,6 +8,9 @@ export default defineConfig({
 	plugins: [
 		tailwindcss(),
 		sveltekit({
+			// The only prerendered page embeds a generated static game directory;
+			// don't crawl that iframe as if it were a SvelteKit route.
+			prerender: { crawl: false },
 			compilerOptions: {
 				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
 				runes: ({ filename }) => filename.split(/[/\\]/).includes('node_modules') ? undefined : true,
@@ -19,7 +22,7 @@ export default defineConfig({
 				routes: {
 					exclude: [
 						'<build>', '<prerendered>', '/original/*', '/messenger/*', '/draco/*',
-						'/robots.txt', '/service-worker.js', '/manifest.webmanifest', '/icons/*'
+						'/robots.txt', '/service-worker.js', '/pwa-register.js', '/manifest.webmanifest', '/icons/*'
 					]
 				}
 			}),

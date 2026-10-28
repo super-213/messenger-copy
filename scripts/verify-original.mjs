@@ -193,6 +193,17 @@ async function verifyNewTabPortals(page, frame) {
 	}
 	console.log(`All ${portalConfig.length} configured portals open in new tabs; game page and proximity updates remain active.`);
 }
+async function verifyZoneExit(frame) {
+	const zone = await frame.evaluate(() => {
+		const titles = window.__originalMessenger.controller.uiScene.scene2D.zoneTitles;
+		titles.checkPlayerPosition([25.1548, 11.1266, 2.25704]);
+		const entered = titles.currentZone;
+		titles.checkPlayerPosition([1000, 1000, 1000]);
+		return { entered, exited: titles.currentZone };
+	});
+	assert.equal(zone.entered, 'square');
+	assert.equal(zone.exited, null, 'Leaving every named zone hides the old title without accessing titles[-1]');
+}
 try {
 	const { context, page, frame } = await start({ width: 1440, height: 950 });
 	const before = await frame.evaluate(() => window.__originalMessenger.controller.currentScene.characters.mesh._localObject.position.toArray());
@@ -217,6 +228,7 @@ try {
 	await placeAtPortal(frame);
 	await link.waitFor();
 	await verifyNewTabPortals(page, frame);
+	await verifyZoneExit(frame);
 	await context.close();
 	console.log('Desktop passed: original intro, player movement, 20 NPCs, skinning, sky, offline play, cottage proximity and explicit new-tab portal navigation.');
 
@@ -228,6 +240,7 @@ try {
 	await mobile.page.screenshot({ path: 'artifacts/original-mobile.png' });
 	const rect = await mobile.frame.locator('#project-entry').boundingBox();
 	assert.ok(rect.x >= 0 && rect.x + rect.width <= 390 && rect.y + rect.height <= 844, 'The mobile project entry fits the viewport');
+	await verifyZoneExit(mobile.frame);
 	await mobile.context.close();
 	assert.deepEqual(errors, []); assert.deepEqual(failed, []); assert.deepEqual(external, []); assert.deepEqual(sockets, []);
 	console.log('Mobile passed. No browser exceptions, HTTP failures, remote resource requests or multiplayer connections.');

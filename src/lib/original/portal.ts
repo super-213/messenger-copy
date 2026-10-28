@@ -60,7 +60,9 @@ live.className = 'project-sr-only';
 live.setAttribute('role', 'status');
 live.setAttribute('aria-live', 'polite');
 document.body.append(live);
-const debug = new URLSearchParams(location.search).has('debug');
+// The static homepage does not need client JS to forward the debug query.
+const debug = new URLSearchParams(location.search).has('debug') ||
+	new URLSearchParams((window.top ?? window).location.search).has('debug');
 const coordinates = document.createElement('output');
 coordinates.className = 'project-coordinates';
 coordinates.hidden = !debug;

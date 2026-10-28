@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import ts from 'typescript';
 import { localizeDialogues } from './localize-dialogues.mjs';
 import { assertMobileAssets } from './mobile-assets.mjs';
+import { gameplayPrefetchManifest, optimizeOriginalStartup } from './optimize-original-startup.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const source = path.join(root, 'reference/messenger.abeto.co');
@@ -33,6 +34,7 @@ async function prepare(directory) {
 			code = replaceChecked(code, 'window.__webgl.start();', 'window.__webgl.start({relativePath:"original"});');
 		}
 		if (entry.name === 'App3D-BLRWK1h9.js') {
+			code = optimizeOriginalStartup(code, replaceChecked);
 			code = localizeDialogues(code, dialogueConfig);
 			code = 'import { LocalizedDialogue } from "../dialogue-ui.js";\n' + code;
 			code = 'import { BilingualChecklist } from "../checklist-ui.js";\n' + code;
@@ -44,6 +46,9 @@ async function prepare(directory) {
 			// Use the engine's offline mode. Its scene transition needs a null guard in that mode.
 			code = replaceChecked(code, 'offline:!1,autoConnect:!1,servers:', 'offline:!0,autoConnect:!1,servers:');
 			code = replaceChecked(code, 'this.characters.mesh._connection._createSocket()', 'this.characters.mesh._connection?._createSocket()', 2);
+			// Leaving every named zone produces index -1: hide the previous title,
+			// but don't try to show a non-existent title during movement/scene entry.
+			code = replaceChecked(code, 'events.emit("ui_zone_title_show"),this.titles[s].show(l)', 's>=0&&(events.emit("ui_zone_title_show"),this.titles[s].show(l))');
 			// Small integration seam for the separate project-entry overlay; shaders and controls are untouched.
 			code = replaceChecked(code, 'const M=new mainController;await M.ready', 'const M=new mainController;window.__originalMessenger={controller:M,events,global:global$1};await M.ready');
 			code = replaceChecked(code, 'const key="App3D_data";', 'const key="Messenger_local_data";');
@@ -52,6 +57,7 @@ async function prepare(directory) {
 	}
 }
 await prepare(path.join(target, 'assets'));
+await writeFile(path.join(target, 'gameplay-prefetch.json'), JSON.stringify(gameplayPrefetchManifest(manifest)) + '\n');
 const html = (await readFile(path.join(source, 'index.html'), 'utf8'))
 	.replaceAll('https://messenger.abeto.co/', '/original/')
 	.replace('</head>', '<link rel="stylesheet" href="/original/portal.css">\n<link rel="stylesheet" href="/original/dialogue-ui.css">\n<script type="module" src="/original/portal.js"></script>\n</head>');
@@ -59,7 +65,7 @@ await writeFile(path.join(target, 'index.html'), html.replace('</head>', '<link 
 for (const file of ['portal.css', 'portals.json', 'dialogue-ui.css', 'checklist-ui.css']) {
 	await cp(path.join(root, 'src/lib/original', file), path.join(target, file));
 }
-for (const module of ['portal', 'dialogue-ui', 'checklist-ui']) {
+for (const module of ['portal', 'dialogue-ui', 'checklist-ui', 'startup']) {
 	const bridge = await readFile(path.join(root, `src/lib/original/${module}.ts`), 'utf8');
 	await writeFile(path.join(target, `${module}.js`), ts.transpileModule(bridge, {
 		compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 }

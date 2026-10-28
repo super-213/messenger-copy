@@ -1,4 +1,7 @@
 import type { Object3D, PerspectiveCamera, Raycaster, Vector3 } from 'three';
+import { createPerformanceMonitor } from './performance.js';
+
+const monitor = createPerformanceMonitor();
 
 type Portal = {
 	id: string;
@@ -8,6 +11,8 @@ type Portal = {
 	direction: [number, number, number];
 	radius: number;
 	openInNewTab: boolean;
+	description?: string;
+	tags?: string[];
 };
 type ResolvedPortal = Portal & { position: Vector3 | null; marker: HTMLSpanElement | null };
 type OriginalScene = {
@@ -31,7 +36,9 @@ const configured: Portal[] = await fetch(new URL('./portals.json', import.meta.u
 const portals: ResolvedPortal[] = configured.map((portal) => {
 	const url = new URL(portal.url);
 	if (!['https:', 'http:'].includes(url.protocol) || !Array.isArray(portal.direction) || portal.direction.length !== 3 ||
-		!portal.direction.every(Number.isFinite) || Math.hypot(...portal.direction) === 0 || !Number.isFinite(portal.radius) || portal.radius <= 0) {
+		!portal.direction.every(Number.isFinite) || Math.hypot(...portal.direction) === 0 || !Number.isFinite(portal.radius) || portal.radius <= 0 ||
+		(portal.description !== undefined && typeof portal.description !== 'string') ||
+		(portal.tags !== undefined && (!Array.isArray(portal.tags) || !portal.tags.every((tag) => typeof tag === 'string')))) {
 		throw new Error(`Invalid project entry: ${portal.id}`);
 	}
 	return { ...portal, url: url.href, position: null, marker: null };
@@ -46,14 +53,63 @@ const caption = document.createElement('p');
 const title = document.createElement('strong');
 const link = document.createElement('a');
 link.rel = 'external noopener noreferrer';
+const actions = document.createElement('div');
+actions.className = 'project-entry-actions';
+const more = document.createElement('button');
+more.type = 'button';
+more.className = 'project-more';
+more.textContent = '了解更多';
+more.setAttribute('aria-controls', 'project-detail');
+more.setAttribute('aria-expanded', 'false');
 copy.append(caption, title);
-panel.append(copy, link);
+actions.append(more, link);
+panel.append(copy, actions);
+
+const detail = document.createElement('section');
+detail.id = 'project-detail';
+detail.setAttribute('aria-labelledby', 'project-detail-title');
+detail.setAttribute('aria-describedby', 'project-detail-description');
+const nativePopover = typeof detail.showPopover === 'function';
+if (nativePopover) {
+	detail.popover = 'auto';
+	more.setAttribute('popovertarget', detail.id);
+}
+else detail.hidden = true;
+const close = document.createElement('button');
+close.type = 'button';
+close.className = 'project-detail-close';
+close.textContent = '×';
+close.setAttribute('aria-label', '关闭建筑详情');
+const detailCopy = document.createElement('div');
+detailCopy.className = 'project-detail-copy';
+const detailCaption = document.createElement('p');
+detailCaption.className = 'project-detail-caption';
+const detailTitle = document.createElement('h2');
+detailTitle.id = 'project-detail-title';
+const description = document.createElement('p');
+description.id = 'project-detail-description';
+const tags = document.createElement('ul');
+tags.className = 'project-detail-tags';
+tags.setAttribute('aria-label', '项目标签');
+const destination = document.createElement('p');
+destination.className = 'project-detail-destination';
+const detailLink = document.createElement('a');
+detailLink.rel = link.rel;
+detailLink.className = 'project-detail-link';
+detailCopy.append(detailCaption, detailTitle, description, tags, destination, detailLink);
+detail.append(close, detailCopy);
 // The engine cancels bubbling touchstart events after audio is unlocked. Safari
 // then suppresses the native anchor click, even when pointer events are stopped.
-for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click']) {
-	panel.addEventListener(type, (event) => event.stopPropagation());
+for (const element of [panel, detail]) {
+	for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click', 'wheel', 'keydown']) {
+		element.addEventListener(type, (event) => event.stopPropagation());
+	}
+	// Release keys already held before focusing the panel, so movement cannot stick.
+	element.addEventListener('keyup', (event) => {
+		if (!['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.code)) event.stopPropagation();
+	});
 }
-document.body.append(panel);
+document.body.append(panel, detail);
 
 const live = document.createElement('p');
 live.className = 'project-sr-only';
@@ -61,8 +117,10 @@ live.setAttribute('role', 'status');
 live.setAttribute('aria-live', 'polite');
 document.body.append(live);
 // The static homepage does not need client JS to forward the debug query.
-const debug = new URLSearchParams(location.search).has('debug') ||
-	new URLSearchParams((window.top ?? window).location.search).has('debug');
+const params = new URLSearchParams((window.top ?? window).location.search);
+const ownParams = new URLSearchParams(location.search);
+const debug = params.has('debug') || ownParams.has('debug');
+const showPerformance = debug || params.has('perf') || ownParams.has('perf');
 const coordinates = document.createElement('output');
 coordinates.className = 'project-coordinates';
 coordinates.hidden = !debug;
@@ -71,6 +129,96 @@ let active: ResolvedPortal | null = null;
 let currentScene: OriginalScene | null = null;
 let lastReport = 0;
 let frame = 0;
+let detailOpen = false;
+let detailPortal: string | null = null;
+let transition: ViewTransition | undefined;
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+const performancePanel = document.createElement('aside');
+performancePanel.id = 'project-performance';
+performancePanel.hidden = !showPerformance;
+performancePanel.setAttribute('aria-label', '本地性能测量');
+const performanceOutput = document.createElement('output');
+const exportButton = document.createElement('button');
+exportButton.type = 'button';
+exportButton.textContent = '导出测量';
+exportButton.addEventListener('click', () => monitor.api.download());
+const resetButton = document.createElement('button');
+resetButton.type = 'button';
+resetButton.textContent = '重新测量';
+resetButton.addEventListener('click', () => monitor.api.reset());
+performancePanel.append(performanceOutput, resetButton, exportButton);
+for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click', 'keydown', 'keyup']) {
+	performancePanel.addEventListener(type, (event) => event.stopPropagation());
+}
+document.body.append(performancePanel);
+let lastPerformanceReport = 0;
+
+function fillDetail(portal: Portal) {
+	detailCaption.textContent = `星球上的一站 · ${portal.location}`;
+	detailTitle.textContent = portal.title;
+	description.textContent = portal.description || `从${portal.location}出发，访问${portal.title}。`;
+	tags.replaceChildren(...(portal.tags ?? []).map((text) => {
+		const tag = document.createElement('li');
+		tag.textContent = text;
+		return tag;
+	}));
+	tags.hidden = !portal.tags?.length;
+	destination.textContent = new URL(portal.url).hostname;
+	detailLink.textContent = `访问${portal.title} ↗`;
+	detailLink.href = portal.url;
+	detailLink.target = navigationTarget(portal);
+	detailPortal = portal.id;
+}
+function updateDetail(portal: Portal) {
+	transition?.skipTransition();
+	// Only the named text region is captured; the animated WebGL canvas stays live.
+	if (detailOpen && !reducedMotion.matches && typeof document.startViewTransition === 'function') {
+		transition = document.startViewTransition(() => { if (detailOpen && active?.id === portal.id) fillDetail(portal); });
+		void transition.ready.catch(() => {});
+		void transition.finished.catch(() => {});
+	} else fillDetail(portal);
+}
+function closeDetail(restoreFocus = false) {
+	transition?.skipTransition();
+	if (!detailOpen) return;
+	detailOpen = false;
+	more.setAttribute('aria-expanded', 'false');
+	if (nativePopover) detail.hidePopover();
+	else detail.hidden = true;
+	monitor.mark('detail-close', active?.id ?? null, false);
+	if (restoreFocus && !panel.hidden) more.focus({ preventScroll: true });
+	else if (detail.contains(document.activeElement)) (document.activeElement as HTMLElement).blur();
+}
+more.addEventListener('click', (event) => {
+	event.preventDefault();
+	if (detailOpen) { closeDetail(true); return; }
+	if (!active || nearby(currentScene)?.id !== active.id) return;
+	fillDetail(active);
+	detailOpen = true;
+	more.setAttribute('aria-expanded', 'true');
+	if (nativePopover) detail.showPopover();
+	else detail.hidden = false;
+	close.focus({ preventScroll: true });
+	monitor.mark('detail-open', active.id, true);
+});
+close.addEventListener('click', () => closeDetail(true));
+detail.addEventListener('beforetoggle', (event) => {
+	if ((event as ToggleEvent).newState !== 'closed' || !detailOpen) return;
+	detailOpen = false;
+	more.setAttribute('aria-expanded', 'false');
+	monitor.mark('detail-close', active?.id ?? null, false);
+});
+document.addEventListener('keydown', (event) => {
+	if (!detailOpen || event.key !== 'Escape') return;
+	event.preventDefault();
+	event.stopImmediatePropagation();
+	closeDetail(true);
+}, true);
+// Older browsers get the same explicit close, Escape and outside-tap behavior.
+document.addEventListener('pointerdown', (event) => {
+	if (!nativePopover && detailOpen && !detail.contains(event.target as Node) && !panel.contains(event.target as Node)) closeDetail();
+}, true);
 
 function nearby(scene: OriginalScene | null) {
 	if (!scene?.characters?.mesh || scene.characters.mesh.interactingElement) return null;
@@ -88,13 +236,14 @@ function navigationTarget(portal: Portal) {
 	// A native top-level navigation lets the OS handle an out-of-scope website.
 	return portal.openInNewTab && !standalone ? '_blank' : '_top';
 }
-link.addEventListener('click', (event) => {
+for (const anchor of [link, detailLink]) anchor.addEventListener('click', (event) => {
 	// Recheck at click time, including when the player moved since the last displayed frame.
-	if (!active || nearby(currentScene)?.id !== active.id) {
+	if (!active || nearby(currentScene)?.id !== active.id || (anchor === detailLink && detailPortal !== active.id)) {
 		event.preventDefault();
 		return;
 	}
-	link.target = navigationTarget(active);
+	anchor.target = navigationTarget(active);
+	monitor.mark('portal-visit', active.id, detailOpen);
 });
 
 function initialize(scene: OriginalScene) {
@@ -121,10 +270,17 @@ function initialize(scene: OriginalScene) {
 function tick(time: number) {
 	frame = requestAnimationFrame(tick);
 	const runtime = (window as OriginalWindow).__originalMessenger;
+	monitor.frame(time, runtime?.controller.state ?? 'loading', active?.id ?? null, detailOpen);
+	if (showPerformance && time - lastPerformanceReport >= 1000) {
+		const report = monitor.api.snapshot();
+		performanceOutput.textContent = `${report.mode === 'long-animation-frame' ? 'LoAF 长帧' : '帧间隔估算'} ≥50ms · ${report.count} 次\n最长 ${report.worstMs}ms${report.blockingMs === null ? '' : ` · 阻塞 ${report.blockingMs}ms`}`;
+		lastPerformanceReport = time;
+	}
 	const scene = runtime?.controller.state === 'present' ? runtime.controller.currentScene : null;
 	if (!scene?.characters?.mesh || !scene._isUploaded) {
 		active = null;
 		panel.hidden = true;
+		closeDetail();
 		live.textContent = '';
 		for (const portal of portals) if (portal.marker) portal.marker.hidden = true;
 		return;
@@ -141,7 +297,13 @@ function tick(time: number) {
 			link.href = active.url;
 			link.target = navigationTarget(active);
 			live.textContent = `已到达${active.location}，可以访问${active.title}。`;
-		} else live.textContent = '';
+			if (detailOpen) updateDetail(active);
+			monitor.mark('portal-enter', active.id, detailOpen);
+		} else {
+			closeDetail();
+			live.textContent = '';
+			monitor.mark('portal-leave', null, false);
+		}
 	}
 	const player = scene.characters.mesh._localObject.position;
 	const camera = scene.camera;
@@ -164,6 +326,7 @@ function pauseUpdates() {
 	cancelAnimationFrame(frame);
 	active = null;
 	panel.hidden = true;
+	closeDetail();
 	live.textContent = '';
 	for (const portal of portals) if (portal.marker) portal.marker.hidden = true;
 }
@@ -176,3 +339,4 @@ function resumeUpdates() {
 resumeUpdates();
 window.addEventListener('pagehide', pauseUpdates);
 window.addEventListener('pageshow', resumeUpdates);
+document.addEventListener('visibilitychange', () => document.hidden ? pauseUpdates() : resumeUpdates());

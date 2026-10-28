@@ -65,7 +65,7 @@ await writeFile(path.join(target, 'index.html'), html.replace('</head>', '<link 
 for (const file of ['portal.css', 'portals.json', 'dialogue-ui.css', 'checklist-ui.css']) {
 	await cp(path.join(root, 'src/lib/original', file), path.join(target, file));
 }
-for (const module of ['portal', 'dialogue-ui', 'checklist-ui', 'startup']) {
+for (const module of ['portal', 'performance', 'dialogue-ui', 'checklist-ui', 'startup']) {
 	const bridge = await readFile(path.join(root, `src/lib/original/${module}.ts`), 'utf8');
 	await writeFile(path.join(target, `${module}.js`), ts.transpileModule(bridge, {
 		compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 }

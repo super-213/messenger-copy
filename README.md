@@ -79,6 +79,38 @@ PLAYWRIGHT_CHANNEL=chrome pnpm test:startup
 
 `src/lib/original/portal.ts` 和 `portal.css` 是独立的入口覆盖层。原版引擎运行在**同源本地 iframe** 中，不是远程嵌入原网站。首页不会再调用旧的占位人物、简化着色器或自制移动控制器。
 
+## 建筑入口详情与面板动效
+
+靠近小屋、书店或咖啡店后，底部入口保留直接访问链接；点击「了解更多」展开建筑详情，显示简介、标签和目标域名。点击关闭、按 Esc、点击浮层外或离开触发范围可收起详情；进入 NPC 对话、页面隐藏和页面离开时也会收起。Esc / 关闭按钮会把焦点交还给「了解更多」。
+
+在 `src/lib/original/portals.json` 中为入口设置可选的 `description`（简介）和 `tags`（字符串数组）。未提供时使用默认简介并隐藏标签。保存后运行 `pnpm original:prepare` 并刷新，生产环境需要重新构建。
+
+支持的浏览器使用原生 Popover 与桌面 CSS 锚点定位；其他浏览器使用固定定位浮层。展开 / 收起使用短淡入与位移动画，打开详情期间切换到另一建筑时，支持的浏览器使用 View Transitions 过渡文字区域，不给 3D 画布设置快照名称。系统「减少动态效果」开启时禁用这些动画。
+
+## 本地卡顿测量
+
+首页加 `?perf` 可查看本地性能面板（`?debug` 同时显示坐标与性能）。面板展示 ≥50ms 的长帧次数、最长时长，并提供「重新测量」和 JSON 导出。普通访问不显示面板，仍在内存中保留最近最多 120 条样本与 120 条交互标记；刷新即清空，不自动上传或写入存档。
+
+支持 Long Animation Frames API 时记录长帧、主线程阻塞时长及浏览器提供的脚本归因；否则基于现有动画循环记录帧间隔，标为「帧间隔估算」，不伪装成主线程阻塞数据。隐藏 / 恢复页面会重置帧间隔基准，恢复时不会重新读取旧的 LoAF 缓冲。LoAF 不是 GPU 分析器，50ms 阈值也不能覆盖所有 60/120Hz 掉帧。
+
+在开发者工具选择 `/original/` iframe 的执行上下文后，可运行：
+
+```js
+window.__messengerPerformance.snapshot() // 当前汇总、样本与入口交互标记
+window.__messengerPerformance.reset()
+window.__messengerPerformance.download()
+```
+
+构建并启动 `pnpm preview` 后运行：
+
+```sh
+PLAYWRIGHT_CHANNEL=chrome pnpm test:portal-links
+PORTAL_LINK_ENGINE=webkit pnpm test:portal-links
+PLAYWRIGHT_CHANNEL=chrome pnpm test:performance
+```
+
+入口检查覆盖桌面 / 手机布局、全部入口详情与导航、Esc 焦点恢复、离开范围、页面恢复和无 Popover / View Transitions 的回退。性能检查通过真实主线程阻塞验证 LoAF 与帧间隔回退、导出、清零及样本上限。
+
 ## 修改中文对话
 
 直接编辑 [`src/lib/original/dialogues.json`](./src/lib/original/dialogues.json)：`intro` 是开场，`npcs` 是人物名称和闲聊，`quests` 是分步骤的任务对白。当前已提供中文文案，英文对照保存在 [`docs/dialogues.original.json`](./docs/dialogues.original.json)。

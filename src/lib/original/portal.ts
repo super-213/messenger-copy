@@ -48,9 +48,11 @@ const link = document.createElement('a');
 link.rel = 'external noopener noreferrer';
 copy.append(caption, title);
 panel.append(copy, link);
-panel.addEventListener('pointerdown', (event) => event.stopPropagation());
-panel.addEventListener('pointerup', (event) => event.stopPropagation());
-panel.addEventListener('click', (event) => event.stopPropagation());
+// The engine cancels bubbling touchstart events after audio is unlocked. Safari
+// then suppresses the native anchor click, even when pointer events are stopped.
+for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click']) {
+	panel.addEventListener(type, (event) => event.stopPropagation());
+}
 document.body.append(panel);
 
 const live = document.createElement('p');
@@ -74,9 +76,23 @@ function nearby(scene: OriginalScene | null) {
 	return portals.filter((portal) => portal.position && player.distanceTo(portal.position) <= portal.radius)
 		.sort((a, b) => player.distanceTo(a.position!) - player.distanceTo(b.position!))[0] ?? null;
 }
+function navigationTarget(portal: Portal) {
+	// The game lives in a same-origin iframe. Read the installed-app signal from
+	// its top-level host, including Safari's Home Screen-specific legacy flag.
+	const host = window.top ?? window;
+	const standalone = host.matchMedia('(display-mode: standalone)').matches ||
+		(host.navigator as Navigator & { standalone?: boolean }).standalone === true;
+	// Home Screen apps cannot reliably create a new window from this iframe.
+	// A native top-level navigation lets the OS handle an out-of-scope website.
+	return portal.openInNewTab && !standalone ? '_blank' : '_top';
+}
 link.addEventListener('click', (event) => {
 	// Recheck at click time, including when the player moved since the last displayed frame.
-	if (!active || nearby(currentScene)?.id !== active.id) event.preventDefault();
+	if (!active || nearby(currentScene)?.id !== active.id) {
+		event.preventDefault();
+		return;
+	}
+	link.target = navigationTarget(active);
 });
 
 function initialize(scene: OriginalScene) {
@@ -121,7 +137,7 @@ function tick(time: number) {
 			title.textContent = active.title;
 			link.textContent = `访问${active.title} ↗`;
 			link.href = active.url;
-			link.target = active.openInNewTab ? '_blank' : '_top';
+			link.target = navigationTarget(active);
 			live.textContent = `已到达${active.location}，可以访问${active.title}。`;
 		} else live.textContent = '';
 	}

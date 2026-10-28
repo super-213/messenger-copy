@@ -18,6 +18,7 @@
 		"reference:capture": "bash scripts/capture-gameplay-browser.sh",
 		"original:prepare": "node scripts/prepare-original.mjs",
 		"test:pwa": "node scripts/verify-pwa.mjs",
+		"test:portal-links": "node scripts/verify-portal-links.mjs",
 		"pwa:icons": "node scripts/generate-pwa-icons.mjs"
 	},
 	"devDependencies": {

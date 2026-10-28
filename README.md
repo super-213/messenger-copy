@@ -2,7 +2,7 @@
 
 首页现在运行 [Messenger](https://messenger.abeto.co/) 原站已发布的前端脚本和本地资源，保留原版人物、骨骼动画、20 个 NPC、地形、天空、阴影、描边、对话和控制方式。它不再使用之前手工重写的 Three.js 简化场景。
 
-本地副本使用原引擎的 **单人模式**，不连接原作的多人服务器。进入场景后，靠近小屋旁会出现博客入口，点击后在新标签页打开 **https://blog.zhihaojiang.com**。主广场带卫星天线的书店旁另有一个个人分身入口，靠近后显示「访问个人分身 ↗」，点击后在新标签页打开 **https://second-me.zhihaojiang.com/**。
+本地副本使用原引擎的 **单人模式**，不连接原作的多人服务器。进入场景后，靠近小屋旁会出现博客入口，点击后访问 **https://blog.zhihaojiang.com**。主广场带卫星天线的书店旁另有一个个人分身入口，靠近后显示「访问个人分身 ↗」，点击后访问 **https://second-me.zhihaojiang.com/**。普通浏览器中会打开新标签页；安装的 PWA 中通过顶层页面导航访问外部网站，由系统决定显示浏览器还是应用内浏览窗口。
 
 ## 运行
 
@@ -58,7 +58,7 @@ PLAYWRIGHT_CHANNEL=chrome pnpm test:pwa
 
 - `direction`：从原版星球中心指向入口的方向。运行时使用原版碰撞网格找到地面。访问 `/?debug`，可查看角色当前方向。
 - `radius`：原版世界单位下的三维触发距离；与旧简化场景的缩放坐标不同。
-- `openInNewTab`：`false` 表示在整个页面中跳转，`true` 表示新标签页。
+- `openInNewTab`：普通浏览器中，`false` 表示在整个页面中跳转，`true` 表示新标签页。PWA 独立窗口（包括 iOS 主屏幕应用）统一通过顶层页面导航访问，避免依赖 iframe 创建新窗口。
 - 可以追加多个入口；重叠区域优先显示最近的一个。对话和换装期间隐藏入口。
 
 `src/lib/original/portal.ts` 和 `portal.css` 是独立的入口覆盖层。原版引擎运行在**同源本地 iframe** 中，不是远程嵌入原网站。首页不会再调用旧的占位人物、简化着色器或自制移动控制器。
@@ -107,6 +107,15 @@ node scripts/verify-safari.mjs http://127.0.0.1:4173
 ```
 
 此检查使用 iPhone 13 的 UA、屏幕参数和触摸操作，确认进入游戏并显示开场对白，同时检查低内存模型和 MP3 音频确实被请求。桌面浏览器仅缩小视口不会触发这些分支。`prepare-original.mjs` 会检查 36 个手机专用 Draco 模型及 OGG 对应的 Safari MP3 文件；缺失时中止构建。这些资源随 `reference/messenger.abeto.co/assets` 一同保存和部署，无需运行时访问原站。WebKit 模拟不能替代真机最终验收。
+
+项目入口的触摸点击和 PWA 导航另有专项检查：
+
+```sh
+PLAYWRIGHT_CHANNEL=chrome pnpm test:portal-links
+PORTAL_LINK_ENGINE=webkit pnpm test:portal-links
+```
+
+它会进入真实游戏，触摸点击全部项目入口，并分别模拟顶层窗口的 `display-mode: standalone` 和 iOS `navigator.standalone` 信号，确认独立窗口使用顶层导航。目标网站由本地测试响应代替，不访问外部服务。此测试不能替代 iPhone 主屏幕应用的系统浏览窗口真机验收。
 
 ## 来源与许可
 
